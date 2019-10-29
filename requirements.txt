@@ -1,0 +1,5 @@
+discover
+pytest
+pytest-cov
+coveralls
+argparse
