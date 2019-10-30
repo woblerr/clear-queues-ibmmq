@@ -14,17 +14,17 @@ def dis_qm(qm_name):
     if qm_name == 'all':
         command = 'dspmq'
     else:
-        command = 'dspmq -m {}'.format(qm_name)
+        command = 'dspmq -m {0}'.format(qm_name)
     return run(command)
 
 
 def dis_qlocal(qs, qm):
-    command = "echo 'DISPLAY QLOCAL({}) WHERE (CURDEPTH GE 1)'| runmqsc {}".format(qs, qm)
+    command = "echo 'DISPLAY QLOCAL({0}) WHERE (CURDEPTH GE 1)'| runmqsc {1}".format(qs, qm)
     return run(command)
 
 
 def clear_qlocal(q, qm):
-    command = "echo 'clear qlocal({})' | runmqsc {}".format(q, qm)
+    command = "echo 'clear qlocal({0})' | runmqsc {1}".format(q, qm)
     return run(command)
 
 
@@ -65,6 +65,16 @@ def list_non_system_qs(q_data):
     return qs_for_clearing
 
 
+def print_msg(input_str, q, qm):
+    if 'AMQ8022' in input_str:
+        msg = 'Queue {0} on manager {1} has been cleared'.format(q, qm)
+    elif 'AMQ8148' in input_str:
+        msg = 'Queue {0} on manager {1} in use. Can not be cleared!'.format(q, qm)
+    else:
+        msg = input_str
+    return msg
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         prog='python clear_queues_ibmmq.py',
@@ -72,7 +82,7 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description='''
 Delete messages from queues (except SYSTEM) on running local mq managers.
-Without arguments the script find all local mq managers and clearing all non SYSTEM queues. 
+Without arguments the script find all local mq managers and clearing all non SYSTEM queues.
 For clearing queues on specific managers or clearing specific queues - use script arguments.
 ''')
     parser.add_argument('-m', metavar='qmgrName', nargs='?', default='all', dest='mq_manager_name', help='queue manager name')
@@ -90,8 +100,8 @@ For clearing queues on specific managers or clearing specific queues - use scrip
             qs = get_not_empty_queues(args.queues_list, qmanager)
             for qgroup in qs:
                 for item in qgroup:
-                    clear_qlocal(item, qmanager)
-                    print('The {} queue on the {} manager has been cleared'.format(item, qmanager))
+                    output = clear_qlocal(item, qmanager)
+                    print(print_msg(output, item, qmanager))
         sys.exit(0)
     except Exception as error:
-        print (error)
+        print(error)

@@ -1,16 +1,24 @@
 import os
 import sys
 import unittest
-from clear_queues_ibmmq import *
+from clear_queues_ibmmq import (
+    dis_qm,
+    dis_qlocal,
+    clear_qlocal,
+    get_running_mq_manager,
+    get_not_empty_queues,
+    list_non_system_qs,
+    run,
+    print_msg
+)
 sys.path.append(os.getcwd())
-
 
 
 class TestClearQueuesIbmmqUnittest(unittest.TestCase):
     test_qm = 'QM1'
 
     def test_dis_qm(self):
-        valid_result = 'QMNAME({})                                               STATUS(Running)\n'.format(self.test_qm)
+        valid_result = 'QMNAME({0})                                               STATUS(Running)\n'.format(self.test_qm)
         invalid_result_1 = 'AMQ7048E: The queue manager name is either not valid or not known.\n'
         invalid_result_2 = 'AMQ8919E: There are no matching IBM MQ queue manager names.\n'
         self.assertEqual(valid_result, dis_qm('all'))
@@ -31,7 +39,8 @@ class TestClearQueuesIbmmqUnittest(unittest.TestCase):
     def test_clear_qlocal(self):
         test_q = 'DEV.QUEUE.3'
         output = clear_qlocal(test_q, self.test_qm)
-        self.assertIn('AMQ8022I: IBM MQ queue cleared.', output)
+        self.assertIn('AMQ8022', output)
+        self.assertIn('queue cleared.', output)
         self.assertIn('No commands have a syntax error.', output)
         self.assertIn('All valid MQSC commands were processed.', output)
 
@@ -61,6 +70,18 @@ class TestClearQueuesIbmmqUnittest(unittest.TestCase):
         self.assertEqual(valid_r, list_non_system_qs(valid_data))
         self.assertEqual(invalid_r, list_non_system_qs(invalid_data))
 
+    def test_print_msg(self):
+        test_q = 'DEV.QUEUE.1'
+        test_1_q = 'clear qlocal({0})\nAMQ8022I: IBM MQ queue cleared.'.format(test_q)
+        test_1_r = 'Queue {0} on manager {1} has been cleared'.format(test_q, self.test_qm)
+        test_2_q = 'clear qlocal({0})\nAMQ8148S: IBM MQ object in use.'.format(test_q)
+        test_2_r = 'Queue {0} on manager {1} in use. Can not be cleared!'.format(test_q, self.test_qm)
+        test_3_q = 'clear qlocal({0})\nAMQ8147S: IBM MQ object {1} not found.'.format(test_q,test_q)
+        test_3_r = 'IBM MQ object {0} not found.'.format(test_q)
+        self.assertEqual(test_1_r, print_msg(test_1_q, test_q, self.test_qm))
+        self.assertEqual(test_2_r, print_msg(test_2_q, test_q, self.test_qm))
+        self.assertIn(test_3_r, print_msg(test_3_q, test_q, self.test_qm))
+
 
 class TestClearQueuesIbmmqIntegration(unittest.TestCase):
     bin_py = sys.executable
@@ -68,24 +89,24 @@ class TestClearQueuesIbmmqIntegration(unittest.TestCase):
 
     def test_help(self):
         valid_r = 'usage: python clear_queues_ibmmq.py [-m qmgrName] [-q queueName [queueName ...]]\n'
-        command = '{} clear_queues_ibmmq.py -m'.format(self.bin_py)
+        command = '{0} clear_queues_ibmmq.py -m'.format(self.bin_py)
         self.assertEqual(valid_r, run(command))
-        command = '{} clear_queues_ibmmq.py -q'.format(self.bin_py)
+        command = '{0} clear_queues_ibmmq.py -q'.format(self.bin_py)
         self.assertEqual(valid_r, run(command))
-        command = '{} clear_queues_ibmmq.py -m -q'.format(self.bin_py)
+        command = '{0} clear_queues_ibmmq.py -m -q'.format(self.bin_py)
         self.assertEqual(valid_r, run(command))
 
     def test_args(self):
-        valid_r = 'The DEV.DEAD.LETTER.QUEUE queue on the {} manager has been cleared\n'.format(self.test_qm)
-        command = '{} clear_queues_ibmmq.py -m {} -q DEV.DEAD.LETTER.QUEUE'.format(self.bin_py, self.test_qm)
+        valid_r = 'Queue DEV.DEAD.LETTER.QUEUE on manager {0} has been cleared\n'.format(self.test_qm)
+        command = '{0} clear_queues_ibmmq.py -m {1} -q DEV.DEAD.LETTER.QUEUE'.format(self.bin_py, self.test_qm)
         self.assertEqual(valid_r, run(command))
 
     def test_system_1(self):
         valid_r = ''
-        command = '{} clear_queues_ibmmq.py -q SYSTEM.*'.format(self.bin_py)
+        command = '{0} clear_queues_ibmmq.py -q SYSTEM.*'.format(self.bin_py)
         self.assertEqual(valid_r, run(command))
 
     def test_args_all(self):
-        valid_r = 'The DEV.QUEUE.1 queue on the {} manager has been cleared\nThe DEV.QUEUE.2 queue on the {} manager has been cleared\n'.format(self.test_qm, self.test_qm)
-        command = '{} clear_queues_ibmmq.py'.format(self.bin_py)
+        valid_r = 'Queue DEV.QUEUE.1 on manager {0} has been cleared\nQueue DEV.QUEUE.2 on manager {1} has been cleared\n'.format(self.test_qm,self.test_qm)
+        command = '{0} clear_queues_ibmmq.py'.format(self.bin_py)
         self.assertEqual(valid_r, run(command))
