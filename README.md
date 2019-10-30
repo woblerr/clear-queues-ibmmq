@@ -1,4 +1,4 @@
-# Clear IBM MQ queues script
+# Cleanup IBM MQ queues script
 [![Build Status](https://travis-ci.com/woblerr/clear-queues-ibmmq.svg?branch=master)](https://travis-ci.com/woblerr/clear-queues-ibmmq)
 
 The script for deleting messages from queues (except SYSTEM) on local running mq managers.
