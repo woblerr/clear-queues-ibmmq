@@ -17,6 +17,7 @@ RUN set -ex && \
     rm get-pip.py && \
     apt-get clean && \
     rm -r /var/lib/apt/lists/*
+RUN ln -sf /opt/mqm/bin/dmpmqmsg /usr/bin/dmpmqmsg
 RUN mkdir -p /home/mqm && chown mqm:mqm /home/mqm
 FROM mq_with_python
 ARG SCRIPT_FOLDER=/home/mqm/admin/clear_queues_ibmmq
@@ -25,10 +26,10 @@ COPY ./requirements.txt $SCRIPT_FOLDER/requirements.txt
 WORKDIR $SCRIPT_FOLDER
 RUN pip2.7 --no-cache-dir install -r $SCRIPT_FOLDER/requirements.txt && \
     pip3.6 --no-cache-dir install -r $SCRIPT_FOLDER/requirements.txt
-COPY ./clear_queues_ibmmq.py $SCRIPT_FOLDER
-COPY ./tests/test_clear_queues_ibmmq.py $SCRIPT_FOLDER/tests
 COPY ./tests/prep_env.sh $SCRIPT_FOLDER/tests/prep_env.sh
 RUN chmod 744 $SCRIPT_FOLDER/tests/prep_env.sh
+COPY ./clear_queues_ibmmq.py $SCRIPT_FOLDER
+COPY ./tests/test_clear_queues_ibmmq.py $SCRIPT_FOLDER/tests
 RUN chown -R mqm:mqm $SCRIPT_FOLDER
 USER mqm
 ENTRYPOINT ["runmqdevserver"]
