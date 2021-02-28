@@ -1,8 +1,0 @@
----
-branches:
-  only:
-  - master
-install:
-  - docker --version
-script:
-  - ./tests/run_tests.sh
