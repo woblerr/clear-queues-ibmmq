@@ -12,13 +12,13 @@ container_id=$(docker container run --env LICENSE=accept --env MQ_QMGR_NAME=QM1 
 
 sleep 60
 
-docker container exec -it $container_id /bin/bash ./tests/prep_env.sh
-docker container exec -it $container_id python2.7 -m pytest --cov=.
+docker container exec -i $container_id /bin/bash ./tests/prep_env.sh
+docker container exec -i $container_id python2.7 -m pytest --cov=.
 
 [ $? -ne 0 ] && exit_code=1
 
-docker container exec -it $container_id /bin/bash ./tests/prep_env.sh
-docker container exec -it $container_id python3.6 -m pytest --cov=.
+docker container exec -i $container_id /bin/bash ./tests/prep_env.sh
+docker container exec -i $container_id python3.6 -m pytest --cov=.
 
 [ $? -ne 0 ] && exit_code=1
 
