@@ -1,6 +1,6 @@
 #!/bin/bash
 
-image="ibmcom/mq:9.1.2.0"
+image="ibmcom/mq:9.2.0.0-r2"
 exit_code=0
 
 set -x
