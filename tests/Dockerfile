@@ -1,26 +1,15 @@
-FROM ibmcom/mq:9.1.2.0 as mq_with_python
+FROM ibmcom/mq:9.2.0.0-r2 as mq_with_python
 USER root
 RUN set -ex && \
-    apt-get update && \
-    apt-get -y install software-properties-common && \
-    add-apt-repository -y ppa:deadsnakes/ppa && \
-    apt-get update
-RUN set -ex && \
-    apt-get -y install \
-    python2.7 \
-    python3.6  
-RUN set -ex && \
-    apt-get install wget && \
-    wget https://bootstrap.pypa.io/get-pip.py && \
-    python2.7 get-pip.py && \
-    python3.6 get-pip.py && \
-    rm get-pip.py && \
-    apt-get clean && \
-    rm -r /var/lib/apt/lists/*
+    microdnf install yum && \
+    yum install -y python27 python36 && \
+    yum clean all && \
+    rm -rf /var/cache/yum
 RUN ln -sf /opt/mqm/bin/dmpmqmsg /usr/bin/dmpmqmsg
-RUN mkdir -p /home/mqm && chown mqm:mqm /home/mqm
 FROM mq_with_python
-ARG SCRIPT_FOLDER=/home/mqm/admin/clear_queues_ibmmq
+ARG SCRIPT_FOLDER=/opt/mqm/admin/clear_queues_ibmmq
+# https://github.com/ibm-messaging/mq-container/blob/9.2.0/Dockerfile-server#L162
+ARG WORK_USER=1001
 RUN mkdir -p $SCRIPT_FOLDER/tests
 COPY ./requirements.txt $SCRIPT_FOLDER/requirements.txt
 WORKDIR $SCRIPT_FOLDER
@@ -30,6 +19,6 @@ COPY ./tests/prep_env.sh $SCRIPT_FOLDER/tests/prep_env.sh
 RUN chmod 744 $SCRIPT_FOLDER/tests/prep_env.sh
 COPY ./clear_queues_ibmmq.py $SCRIPT_FOLDER
 COPY ./tests/test_clear_queues_ibmmq.py $SCRIPT_FOLDER/tests
-RUN chown -R mqm:mqm $SCRIPT_FOLDER
-USER mqm
+RUN chown -R $WORK_USER:root $SCRIPT_FOLDER
+USER $WORK_USER
 ENTRYPOINT ["runmqdevserver"]
